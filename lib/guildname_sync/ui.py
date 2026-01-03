@@ -10,17 +10,13 @@ from ..common import ensure_admin
 from .service import GuildNameSyncService
 
 
-class GuildNameSyncCog(commands.GroupCog, name="guildname"):
-    """
-    GroupCog = all app_commands in this class become subcommands of /guildname
-    Example:
-      /guildname enable
-      /guildname disable
-      /guildname set
-      /guildname status
-      /guildname update
-      /guildname clear  (I moved clear under guildname too to keep it simple)
-    """
+class GuildNameSyncCog(
+    commands.GroupCog,
+    name="guildname",
+    description="Manage auto guild member list."
+):
+    """Commands for syncing guild member list."""
+
 
     def __init__(self, bot: commands.Bot) -> None:
         super().__init__()
