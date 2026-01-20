@@ -1,5 +1,5 @@
 import asyncio
-
+import logging
 from discord.ext import commands
 
 from app import server_on
@@ -8,6 +8,17 @@ from lib.guildname_sync import GuildNameSyncCog
 
 
 TOKEN = load_token()
+
+
+
+logging.basicConfig(
+    level=logging.INFO,  # อยากละเอียดใช้ DEBUG
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
+
+# เพิ่มถ้าอยากเห็น HTTP / rate limit ชัดขึ้น
+logging.getLogger("discord").setLevel(logging.INFO)
+logging.getLogger("discord.http").setLevel(logging.INFO)  # เปลี่ยนเป็น DEBUG ได้
 
 
 def create_bot() -> commands.Bot:
