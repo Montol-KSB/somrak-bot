@@ -69,6 +69,7 @@ class GuildNameSyncCog(commands.GroupCog, name="guildname"):
         summary_channel: discord.TextChannel,
         keywords: Optional[str] = None,
         auto_role: Optional[discord.Role] = None,  # NEW
+        newbie_role: Optional[discord.Role] = None,   # NEW
     ) -> None:
         """
         /guildname enable
@@ -93,6 +94,8 @@ class GuildNameSyncCog(commands.GroupCog, name="guildname"):
 
         if auto_role is not None:
             settings.auto_role_id = auto_role.id
+        if newbie_role is not None:
+            settings.newbie_role_id = newbie_role.id
 
         if keywords is not None:
             parts = [k.strip() for k in keywords.split(",") if k.strip()]
@@ -101,7 +104,7 @@ class GuildNameSyncCog(commands.GroupCog, name="guildname"):
 
         keywords_text = ", ".join(settings.ign_keywords) or "None"
         auto_role_text = auto_role.mention if auto_role else "None"
-
+        newbie_role_text = newbie_role.mention if newbie_role else "None"
 
         await interaction.response.send_message(
             "✅ Guild name sync **enabled**.\n\n"
@@ -109,7 +112,8 @@ class GuildNameSyncCog(commands.GroupCog, name="guildname"):
             f"**Summary channel:** {summary_channel.mention}\n"
             f"**Role grouping:** automatic (Discord role hierarchy)\n"
             f"**IGN keywords:** {keywords_text}\n"
-            f"**Auto role:** {auto_role_text}",
+            f"**Auto role:** {auto_role_text}\n"
+            f"**Newbie role:** {newbie_role_text}",
             ephemeral=True,
         )
 
@@ -155,7 +159,7 @@ class GuildNameSyncCog(commands.GroupCog, name="guildname"):
         summary_channel: Optional[discord.TextChannel] = None,
         keywords: Optional[str] = None,
         auto_role: Optional[discord.Role] = None,          # NEW
-        clear_auto_role: Optional[bool] = None,            # NEW (ไว้ล้างค่า)
+        newbie_role: Optional[discord.Role] = None,     # NEW
     ) -> None:
         """
         /guildname set
@@ -186,8 +190,9 @@ class GuildNameSyncCog(commands.GroupCog, name="guildname"):
 
         if auto_role is not None:
             settings.auto_role_id = auto_role.id
-        if clear_auto_role:
-            settings.auto_role_id = None
+        if newbie_role is not None:
+            settings.newbie_role_id = newbie_role.id
+
 
         source_text = (
             f"<#{settings.source_channel_id}>"
@@ -201,6 +206,7 @@ class GuildNameSyncCog(commands.GroupCog, name="guildname"):
         )
         keywords_text = ", ".join(settings.ign_keywords) or "None"
         auto_role_text = f"<@&{settings.auto_role_id}>" if settings.auto_role_id else "None"
+        newbie_role_text = f"<@&{settings.newbie_role_id}>" if settings.newbie_role_id else "None"
 
         await interaction.response.send_message(
             "✅ Settings updated.\n\n"
@@ -208,7 +214,8 @@ class GuildNameSyncCog(commands.GroupCog, name="guildname"):
             f"**Summary channel:** {summary_text}\n"
             f"**Role grouping:** automatic (Discord role hierarchy)\n"
             f"**IGN keywords:** {keywords_text}\n"
-            f"**Auto role:** {auto_role_text}",
+            f"**Auto role:** {auto_role_text}\n"
+            f"**Newbie role:** {newbie_role_text}",
             ephemeral=True,
         )
 
