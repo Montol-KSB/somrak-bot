@@ -249,7 +249,6 @@ class GuildNameSyncCog(commands.GroupCog, name="guildname"):
         auto_role_text = f"<@&{settings.auto_role_id}>" if settings.auto_role_id else "None"
 
         await interaction.response.send_message(
-            f"**Guild name sync v0.0.1**\n"
             f"**Enabled:** {settings.enabled}\n"
             f"**Intro channel:** {source_text}\n"
             f"**Summary channel:** {summary_text}\n"
