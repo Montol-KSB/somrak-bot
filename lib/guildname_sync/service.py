@@ -7,6 +7,9 @@ import discord
 
 from .settings import GuildSettings
 
+# Add a default safe maximum for extracted IGN length.
+DEFAULT_MAX_IGN_LENGTH = 100
+
 
 class GuildNameSyncService:
     """
@@ -41,7 +44,7 @@ class GuildNameSyncService:
 
         Rules:
         - look for configured keywords
-        - take text AFTER keyword
+        - take text AFTER keyword (but only up to a sensible max length)
         - stop at newline
         - stop at "ID"
         - strip brackets / spaces
@@ -58,6 +61,11 @@ class GuildNameSyncService:
                 # : ： = - whitespace
                 part = re.sub(r'^[:：=\-\s]+', '', part)
 
+                # Limit length of text we process after the keyword to avoid hangs
+                max_len = getattr(settings, "ign_max_length", DEFAULT_MAX_IGN_LENGTH)
+                if max_len and isinstance(max_len, int) and max_len > 0:
+                    part = part[:max_len]
+
                 # stop at newline
                 part = part.split('\n')[0]
 
@@ -73,7 +81,6 @@ class GuildNameSyncService:
                     return ign
 
         return None
-
 
     # ------------------------------
     # Role priority
@@ -107,7 +114,6 @@ class GuildNameSyncService:
 
         # no roles (rare): push to bottom
         return 9999
-
 
     # ------------------------------
     # Core: build summary text
