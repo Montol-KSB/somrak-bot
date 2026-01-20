@@ -180,7 +180,7 @@ class GuildNameSyncService:
         # Build text
         # ---------------------------
         lines: List[str] = []
-        lines.append("📜 **รายชื่อสมาชิกกิลด์ (Auto-Update)**\n")
+        lines.append("📜 **รายชื่อสมาชิกกิลด์**\n")
 
         for group_name, data in sorted(
             groups.items(), key=lambda kv: kv[1]["sort_key"]  # type: ignore[index]
