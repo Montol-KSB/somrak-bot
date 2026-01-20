@@ -7,8 +7,31 @@ import discord
 
 from .settings import GuildSettings
 
-# Add a default safe maximum for extracted IGN length.
-DEFAULT_MAX_IGN_LENGTH = 100
+MAX_DISCORD_LEN = 2000
+
+def split_text_lines(text: str, limit: int = MAX_DISCORD_LEN) -> List[str]:
+    lines = text.splitlines()
+    chunks: List[str] = []
+    buf = ""
+
+    for line in lines:
+        add = line + "\n"
+
+        # ถ้า line เดียวเกิน limit ให้ตัดทิ้ง (กัน crash)
+        if len(add) > limit:
+            add = add[: limit - 1] + "\n"
+
+        if len(buf) + len(add) > limit:
+            if buf.strip():
+                chunks.append(buf.rstrip())
+            buf = add
+        else:
+            buf += add
+
+    if buf.strip():
+        chunks.append(buf.rstrip())
+
+    return chunks
 
 
 class GuildNameSyncService:
@@ -149,7 +172,7 @@ class GuildNameSyncService:
         # user_id -> (member, ign)
         user_map: Dict[int, Tuple[discord.Member, str]] = {}
 
-        async for msg in source.history(limit=None, oldest_first=True):
+        async for msg in source.history(limit=3000, oldest_first=True):
             if msg.author.bot:
                 continue
             if not isinstance(msg.author, discord.Member):
@@ -212,10 +235,6 @@ class GuildNameSyncService:
     # Apply summary to summary channel
     # ------------------------------
     async def rebuild_summary(self, guild: discord.Guild) -> int:
-        """
-        Delete old summary messages by this bot in summary channel
-        and post a new one. Return 1 if posted, 0 if no data.
-        """
         settings = self.get_settings(guild)
 
         summary_text = await self.build_summary_text(guild)
@@ -229,14 +248,43 @@ class GuildNameSyncService:
         if not isinstance(summary, discord.TextChannel):
             return 0
 
-        # delete old bot messages
-        async for m in summary.history(limit=50):
-            if m.author == self.bot.user:
-                await m.delete()
+        chunks = split_text_lines(summary_text)  # <= 2000 guaranteed
 
-        await summary.send(summary_text)
-        print(f"[{guild.name}] Summary updated.")
+        # fetch old messages (if any)
+        old_msgs: List[discord.Message] = []
+        for mid in list(settings.summary_message_ids):
+            try:
+                m = await summary.fetch_message(mid)
+                old_msgs.append(m)
+            except discord.NotFound:
+                # message deleted manually
+                continue
+            except discord.Forbidden:
+                # no permission to fetch
+                old_msgs = []
+                break
+
+        # edit existing messages
+        used_ids: List[int] = []
+        for i, chunk in enumerate(chunks):
+            if i < len(old_msgs):
+                await old_msgs[i].edit(content=chunk)
+                used_ids.append(old_msgs[i].id)
+            else:
+                m = await summary.send(chunk)
+                used_ids.append(m.id)
+
+        # delete extra old messages if new chunks fewer
+        for j in range(len(chunks), len(old_msgs)):
+            try:
+                await old_msgs[j].delete()
+            except Exception:
+                pass
+
+        settings.summary_message_ids = used_ids
+        print(f"[{guild.name}] Summary updated. chunks={len(chunks)}")
         return 1
+
 
     async def clear_summary(self, guild: discord.Guild) -> int:
         """

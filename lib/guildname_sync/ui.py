@@ -10,12 +10,8 @@ from ..common import ensure_admin
 from .service import GuildNameSyncService
 
 
-class GuildNameSyncCog(
-    commands.GroupCog,
-    name="guildname",
-    description="Manage auto guild member list."
-):
-    """Commands for syncing guild member list."""
+class GuildNameSyncCog(commands.GroupCog, name="guildname"):
+    """Sync and summarize members' in-game names from the intro channel."""
 
 
     def __init__(self, bot: commands.Bot) -> None:
