@@ -68,6 +68,7 @@ class GuildNameSyncCog(commands.GroupCog, name="guildname"):
         source_channel: discord.TextChannel,
         summary_channel: discord.TextChannel,
         keywords: Optional[str] = None,
+        auto_role: Optional[discord.Role] = None,  # NEW
     ) -> None:
         """
         /guildname enable
@@ -90,19 +91,25 @@ class GuildNameSyncCog(commands.GroupCog, name="guildname"):
         settings.source_channel_id = source_channel.id
         settings.summary_channel_id = summary_channel.id
 
+        if auto_role is not None:
+            settings.auto_role_id = auto_role.id
+
         if keywords is not None:
             parts = [k.strip() for k in keywords.split(",") if k.strip()]
             if parts:
                 settings.ign_keywords = parts
 
         keywords_text = ", ".join(settings.ign_keywords) or "None"
+        auto_role_text = auto_role.mention if auto_role else "None"
+
 
         await interaction.response.send_message(
             "✅ Guild name sync **enabled**.\n\n"
             f"**Intro channel:** {source_channel.mention}\n"
             f"**Summary channel:** {summary_channel.mention}\n"
             f"**Role grouping:** automatic (Discord role hierarchy)\n"
-            f"**IGN keywords:** {keywords_text}",
+            f"**IGN keywords:** {keywords_text}\n"
+            f"**Auto role:** {auto_role_text}",
             ephemeral=True,
         )
 
@@ -147,6 +154,8 @@ class GuildNameSyncCog(commands.GroupCog, name="guildname"):
         source_channel: Optional[discord.TextChannel] = None,
         summary_channel: Optional[discord.TextChannel] = None,
         keywords: Optional[str] = None,
+        auto_role: Optional[discord.Role] = None,          # NEW
+        clear_auto_role: Optional[bool] = None,            # NEW (ไว้ล้างค่า)
     ) -> None:
         """
         /guildname set
@@ -170,11 +179,15 @@ class GuildNameSyncCog(commands.GroupCog, name="guildname"):
             settings.source_channel_id = source_channel.id
         if summary_channel is not None:
             settings.summary_channel_id = summary_channel.id
-
         if keywords is not None:
             parts = [k.strip() for k in keywords.split(",") if k.strip()]
             if parts:
                 settings.ign_keywords = parts
+
+        if auto_role is not None:
+            settings.auto_role_id = auto_role.id
+        if clear_auto_role:
+            settings.auto_role_id = None
 
         source_text = (
             f"<#{settings.source_channel_id}>"
@@ -187,13 +200,15 @@ class GuildNameSyncCog(commands.GroupCog, name="guildname"):
             else "Not set"
         )
         keywords_text = ", ".join(settings.ign_keywords) or "None"
+        auto_role_text = f"<@&{settings.auto_role_id}>" if settings.auto_role_id else "None"
 
         await interaction.response.send_message(
             "✅ Settings updated.\n\n"
             f"**Intro channel:** {source_text}\n"
             f"**Summary channel:** {summary_text}\n"
             f"**Role grouping:** automatic (Discord role hierarchy)\n"
-            f"**IGN keywords:** {keywords_text}",
+            f"**IGN keywords:** {keywords_text}\n"
+            f"**Auto role:** {auto_role_text}",
             ephemeral=True,
         )
 
@@ -224,6 +239,7 @@ class GuildNameSyncCog(commands.GroupCog, name="guildname"):
             else "Not set"
         )
         keywords_text = ", ".join(settings.ign_keywords) or "None"
+        auto_role_text = f"<@&{settings.auto_role_id}>" if settings.auto_role_id else "None"
 
         await interaction.response.send_message(
             f"**Guild name sync v0.0.1**\n"
@@ -231,7 +247,8 @@ class GuildNameSyncCog(commands.GroupCog, name="guildname"):
             f"**Intro channel:** {source_text}\n"
             f"**Summary channel:** {summary_text}\n"
             f"**Role grouping:** automatic (Discord role hierarchy)\n"
-            f"**IGN keywords:** {keywords_text}",
+            f"**IGN keywords:** {keywords_text}\n"
+            f"**Auto role:** {auto_role_text}\n",
             ephemeral=True,
         )
 

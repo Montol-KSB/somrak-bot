@@ -8,6 +8,7 @@ import discord
 from .settings import GuildSettings
 
 MAX_DISCORD_LEN = 2000
+DEFAULT_MAX_IGN_LENGTH = 100  # หรือ 80 ก็ได้
 
 def split_text_lines(text: str, limit: int = MAX_DISCORD_LEN) -> List[str]:
     lines = text.splitlines()
@@ -309,14 +310,33 @@ class GuildNameSyncService:
         print(f"[{guild.name}] Cleared {deleted} summary messages.")
         return deleted
 
-    # ------------------------------
-    # Hook for on_message
-    # ------------------------------
+    async def _apply_auto_role(self, guild: discord.Guild, member: discord.Member, settings) -> None:
+        if not settings.auto_role_id:
+            return
+
+        role = guild.get_role(settings.auto_role_id)
+        if role is None:
+            return
+
+        if role in member.roles:
+            return
+
+        me = guild.me  # type: ignore[attr-defined]
+        if me is None:
+            return
+        if not me.guild_permissions.manage_roles:
+            return
+
+        if role.position >= me.top_role.position:
+            return
+
+        try:
+            await member.add_roles(role, reason="Intro completed (auto role)")
+        except (discord.Forbidden, discord.HTTPException):
+            return
+
+
     async def on_intro_message(self, message: discord.Message) -> None:
-        """
-        Called from Cog.on_message. If message looks like IGN update,
-        rebuild summary.
-        """
         if message.guild is None:
             return
 
@@ -329,5 +349,13 @@ class GuildNameSyncService:
             return
 
         ign = self.extract_ign(message.content, settings)
-        if ign:
-            await self.rebuild_summary(guild)
+        if not ign:
+            return
+
+        # ✅ NEW: assign role first (optional)
+        if isinstance(message.author, discord.Member):
+            await self._apply_auto_role(guild, message.author, settings)
+
+        # แล้วค่อย rebuild summary
+        await self.rebuild_summary(guild)
+
