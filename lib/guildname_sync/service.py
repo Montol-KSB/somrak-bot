@@ -52,22 +52,19 @@ class GuildNameSyncService:
 
         text = content.strip()
 
+        # try to match "<keyword><optional separators><IGN...>"
         for kw in settings.ign_keywords:
-            if kw in text:
-                # take text after keyword
-                part = text.split(kw, 1)[1]
+            # safe max length
+            max_len = getattr(settings, "ign_max_length", DEFAULT_MAX_IGN_LENGTH)
+            if not (isinstance(max_len, int) and max_len > 0):
+                max_len = DEFAULT_MAX_IGN_LENGTH
 
-                # remove leading separators
-                # : ： = - whitespace
-                part = re.sub(r'^[:：=\-\s]+', '', part)
-
-                # Limit length of text we process after the keyword to avoid hangs
-                max_len = getattr(settings, "ign_max_length", DEFAULT_MAX_IGN_LENGTH)
-                if max_len and isinstance(max_len, int) and max_len > 0:
-                    part = part[:max_len]
-
-                # stop at newline
-                part = part.split('\n')[0]
+            # match keyword followed by optional separators (colon, equals, dash, whitespace)
+            # capture the following text (up to max_len characters) — allows "ชื่อในเกม dukuyes" and "ชื่อในเกมdukuyes"
+            pattern = re.compile(re.escape(kw) + r'[：:=\-\s]*([^\n]{1,' + str(max_len) + r'})', flags=re.IGNORECASE)
+            m = pattern.search(text)
+            if m:
+                part = m.group(1)
 
                 # stop at ID (Thai / English)
                 part = re.split(r'\bID\b|ไอดี', part, flags=re.IGNORECASE)[0]
@@ -76,7 +73,18 @@ class GuildNameSyncService:
                 part = re.sub(r'[()\[\]{}]+', '', part)
 
                 ign = part.strip()
+                if ign:
+                    return ign
 
+            # fallback: original logic (keeps compatibility)
+            if kw in text:
+                part = text.split(kw, 1)[1]
+                part = re.sub(r'^[:：=\-\s]+', '', part)
+                part = part[:max_len]
+                part = part.split('\n')[0]
+                part = re.split(r'\bID\b|ไอดี', part, flags=re.IGNORECASE)[0]
+                part = re.sub(r'[()\[\]{}]+', '', part)
+                ign = part.strip()
                 if ign:
                     return ign
 
