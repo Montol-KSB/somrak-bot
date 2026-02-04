@@ -44,7 +44,7 @@ async def on_ready():
 
 
 async def main():
-    server_on()
+    #server_on()
     await bot.add_cog(GuildNameSyncCog(bot))
     await bot.start(TOKEN)
 
