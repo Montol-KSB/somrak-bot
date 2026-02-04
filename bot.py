@@ -2,7 +2,6 @@ import asyncio
 import logging
 from discord.ext import commands
 
-from app import server_on
 from lib.common import load_token, create_default_intents
 from lib.guildname_sync import GuildNameSyncCog
 
